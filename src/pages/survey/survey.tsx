@@ -23,7 +23,11 @@ import sha256 from "crypto-js/sha256";
 
 import { db } from "@app/firebase";
 import { doc, collection, addDoc, setDoc } from "firebase/firestore";
-import { Highlight2, Highlight1, NumberedList } from "@app/pages/home/styles";
+import {
+  Highlight2,
+  Highlight1,
+  NumberedList,
+} from "@app/pages/instructionStyles";
 import { Input } from "@app/shared/components/index";
 
 import moment from "moment";

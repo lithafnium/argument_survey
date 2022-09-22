@@ -1,5 +1,7 @@
 const routes = {
-  HOME: "/",
+  REDDIT: "/reddit",
+  REDDITSURVEY: "/redditsurvey",
+  NLI: "/nli",
   SURVEY: "/survey",
 };
 
