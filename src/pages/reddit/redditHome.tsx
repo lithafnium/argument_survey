@@ -21,6 +21,7 @@ import { Link } from "react-router-dom";
 import { colors } from "@app/styles/styles";
 import { BsFillCaretLeftFill, BsFillCaretRightFill } from "react-icons/bs";
 import Instructions from "@app/pages/instructions/instructions";
+
 const RedditHome = () => {
   const { search } = useLocation();
   const groupColors = ["#C67838", "#7C9647"];

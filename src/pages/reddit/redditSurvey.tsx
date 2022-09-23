@@ -15,15 +15,26 @@ import {
   RowContainer,
 } from "./styles";
 import { Button } from "@app/shared/components/index";
-import { BsFillCaretLeftFill, BsFillCaretRightFill } from "react-icons/bs";
+import {
+  BsFillCaretLeftFill,
+  BsFillCaretRightFill,
+  BsTextParagraph,
+} from "react-icons/bs";
 import ReactSlider from "react-slider";
 import styled from "styled-components";
 import { colors } from "@app/styles/styles";
+import reddit from "@app/shared/constants/reddit_sample_filtered_1800.json";
 
 interface Response {
   classification: string;
-  novelty: string | null;
+  novelty: string;
   explanation: string;
+}
+
+interface RedditQuestion {
+  title: string;
+  context: string;
+  response: string;
 }
 
 const CATEGORIES = [
@@ -95,29 +106,62 @@ const StyledContainer = styled.div`
 
 const RedditSurvey = () => {
   const [currentValue, setCurrentValue] = useState(0);
-
+  const [questions, setQuestions] = useState<RedditQuestion[]>([]);
   const [responses, setResponses] = useState<Response[]>([]);
   const [showA, setShowA] = useState(false);
   const [current, setCurrent] = useState(null);
   const [index, setIndex] = useState(1);
   const [finished, setFinished] = useState(false);
   const [feedback, setFeedback] = useState("");
+  // @ts-ignore
+  const total = reddit.length;
+  useEffect(() => {
+    let arr = [];
+    while (arr.length < 10) {
+      let r = Math.floor(Math.random() * total) + 1;
+      if (arr.indexOf(r) === -1) arr.push(r);
+    }
+
+    // console.log(reddit[0]);
+    let qs: RedditQuestion[] = [];
+    arr.forEach((e, _) => {
+      // @ts-ignore
+      let redditObj = reddit[e];
+      let questionObj = {
+        title: redditObj["title"],
+        context: redditObj["selftext"],
+        response: redditObj["good_comments"][0]["body"],
+      };
+      qs.push(questionObj);
+    });
+
+    let copy: Response[] = [];
+    [...qs].forEach(() => {
+      copy.push({
+        classification: "",
+        novelty: "",
+        explanation: "",
+      });
+    });
+
+    setQuestions(qs);
+    setResponses(copy);
+  }, []);
 
   const updateIndex = (adder: number) => {
-    setIndex(index + adder);
-    // if (
-    //   // @ts-ignore
-    //   (index + adder <= output.length && adder > 0) ||
-    //   (index + adder >= 1 && adder < 0)
-    // ) {
-    //   let next = index + adder;
-    //   if (index + adder == output.length) {
-    //     setFinished(true);
-    //   } else {
-    //     setFinished(false);
-    //   }
-    //   setIndex(index + adder);
-    // }
+    if (
+      // @ts-ignore
+      (index + adder <= questions.length && adder > 0) ||
+      (index + adder >= 1 && adder < 0)
+    ) {
+      let next = index + adder;
+      if (index + adder == questions.length) {
+        setFinished(true);
+      } else {
+        setFinished(false);
+      }
+      setIndex(index + adder);
+    }
   };
 
   return (
@@ -128,86 +172,127 @@ const RedditSurvey = () => {
             <Arrow onClick={() => updateIndex(-1)} disabled={index - 1 === 0}>
               <BsFillCaretLeftFill />
             </Arrow>
-            Question {index} of {10}
+            Question {index} of {questions.length}
             <Arrow
               onClick={() => {
                 updateIndex(1);
               }}
-              // disabled={
-              //   !questionHighlight[index - 1] || index === output.length
-              // }
+              disabled={index === questions.length}
             >
               <BsFillCaretRightFill />
             </Arrow>
           </Arrows>
-          <h3>
-            Based on your reasoning, please classify the data point into one of
-            the following categories.
-          </h3>
-          <div style={{ fontSize: "1em", margin: "1em 0 1em 0" }}>
-            {CATEGORIES.map((e, i) => {
-              return (
-                <SelectionRow key={i}>
-                  <input
-                    onChange={(_) => {
-                      if (e === CATEGORIES[0]) setShowA(true);
-                      else setShowA(false);
-                    }}
-                    name="categories"
-                    style={{ marginRight: "1em" }}
-                    type="radio"
-                    value={e}
-                  />
-                  <label htmlFor={e}>{e}</label>
-                </SelectionRow>
-              );
-            })}
-          </div>
-          <Divider />
-          {showA && (
+          {questions.length > 0 && (
             <div>
-              <h3>Enter in the "novelty" level of your counterargument</h3>
-              <StyledContainer>
-                <StyledSlider
-                  // defaultValue={[50, 75]}
-                  min={1}
-                  max={5}
-                  marks
-                  renderTrack={Track}
-                  renderThumb={Thumb}
-                  renderMark={Mark}
-                  onChange={(value, index) =>
-                    console.log(`onChange: ${JSON.stringify({ value, index })}`)
-                  }
+              <Content>
+                <Highlight>Title:</Highlight> {questions[index - 1].title}
+              </Content>
+              <Content>
+                <Highlight>Context:</Highlight> {questions[index - 1].context}
+              </Content>
+              <Content>
+                <Highlight>Response:</Highlight> {questions[index - 1].response}
+              </Content>
+            </div>
+          )}
+          <Divider />
+          {responses.length > 0 && (
+            <div>
+              <h3>
+                Based on your reasoning, please classify the data point into one
+                of the following categories.
+              </h3>
+              <div style={{ fontSize: "1em", margin: "1em 0 1em 0" }}>
+                {CATEGORIES.map((e, i) => {
+                  return (
+                    <SelectionRow key={i}>
+                      <input
+                        checked={
+                          responses[index - 1]["classification"] ==
+                          CATEGORIES[i]
+                        }
+                        onChange={(_) => {
+                          let copy = [...responses];
+                          copy[index - 1]["classification"] = CATEGORIES[i];
+
+                          if (i !== 0) copy[index - 1]["novelty"] = "";
+                          setResponses(copy);
+                        }}
+                        name={"categories" + i}
+                        style={{ marginRight: "1em" }}
+                        type="radio"
+                        value={e}
+                      />
+                      <label htmlFor={e}>{e}</label>
+                    </SelectionRow>
+                  );
+                })}
+              </div>
+              <Divider />
+              {responses[index - 1]["classification"] === CATEGORIES[0] && (
+                <div>
+                  <h3>Enter in the "novelty" level of your counterargument</h3>
+                  <StyledContainer>
+                    <StyledSlider
+                      // defaultValue={[50, 75]}
+                      value={
+                        NOVELTY.indexOf(responses[index - 1]["novelty"]) !== -1
+                          ? NOVELTY.indexOf(responses[index - 1]["novelty"]) + 1
+                          : 1
+                      }
+                      min={1}
+                      max={5}
+                      marks
+                      renderTrack={Track}
+                      renderThumb={Thumb}
+                      renderMark={Mark}
+                      onBeforeChange={(value, _) => {
+                        let copy = [...responses];
+                        // @ts-ignore
+                        copy[index - 1]["novelty"] = NOVELTY[value - 1];
+                        setResponses(copy);
+                      }}
+                      onChange={(value, _) => {
+                        let copy = [...responses];
+                        // @ts-ignore
+                        copy[index - 1]["novelty"] = NOVELTY[value - 1];
+                        setResponses(copy);
+                      }}
+                    />
+                  </StyledContainer>
+                  <div
+                    style={{
+                      display: "flex",
+                      width: "100%",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <p style={{ width: "15%" }}>
+                      Almost everyone can come up with my counterargument.
+                    </p>
+                    <p style={{ width: "15%" }}>
+                      Almost no one can come up with my counterargument.
+                    </p>
+                  </div>
+                </div>
+              )}
+              <div>
+                <h3>
+                  Enter in your explanation. If you have chosen A, please write
+                  your counterargument.
+                </h3>
+                <Feedback
+                  placeholder="Enter in your explanation here"
+                  value={responses[index - 1]["explanation"]}
+                  onChange={(e) => {
+                    let copy = [...responses];
+                    copy[index - 1]["explanation"] = e.target.value;
+                    setResponses(copy);
+                  }}
                 />
-              </StyledContainer>
-              <div
-                style={{
-                  display: "flex",
-                  width: "100%",
-                  justifyContent: "space-between",
-                }}
-              >
-                <p style={{ width: "15%" }}>
-                  Almost everyone can come up with my counterargument.
-                </p>
-                <p style={{ width: "15%" }}>
-                  Almost no one can come up with my counterargument.
-                </p>
               </div>
             </div>
           )}
-          <div>
-            <h3>
-              Enter in your explanation. If you have chosen A, please write your
-              counterargument.
-            </h3>
-            <Feedback
-              placeholder="Enter in your explanation here"
-              value={feedback}
-              onChange={(e) => setFeedback(e.target.value)}
-            />
-          </div>
         </ContainerInner>
       </Container>
     </div>

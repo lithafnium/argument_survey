@@ -36,7 +36,7 @@ const NliHome = () => {
       </Content>
       <Content>
         You will see text formatted as a piece of context and a piece of
-        premise:
+        hypothesis:
       </Content>
       <ContentContainer
         style={{
@@ -52,8 +52,8 @@ const NliHome = () => {
           the goal during children's soccer game.
         </Content>
         <Content>
-          <Highlight>Premise:</Highlight> A player passing the ball in a soccer
-          game.
+          <Highlight>Hypothesis:</Highlight> A player passing the ball in a
+          soccer game.
         </Content>
         <Content>
           <Highlight>Label:</Highlight> False
@@ -61,10 +61,10 @@ const NliHome = () => {
       </ContentContainer>
       <Content>
         The label describes most people’s opinion on the relationship between
-        the context and the premise. In this example, most people think that the
-        premise is <Highlight>False</Highlight> based on the context. We want to
-        know whether you can argue against the common opinion, that is, whether
-        you can argue that the premise is{" "}
+        the context and the Hypothesis. In this example, most people think that
+        the Hypothesis is <Highlight>False</Highlight> based on the context. We
+        want to know whether you can argue against the common opinion, that is,
+        whether you can argue that the Hypothesis is{" "}
         <Highlight>not necessarily False</Highlight> under the context. Note
         that we are aware that people might have different perceptions on
         theirselves/other people, so please feel free to make choice based on
@@ -82,8 +82,8 @@ const NliHome = () => {
         country.
       </Content>
       <Content>
-        <Highlight>Premise:</Highlight> A 1984 Poll concluded NewsHour is seen
-        as the most credible newscast by the public.
+        <Highlight>Hypothesis:</Highlight> A 1984 Poll concluded NewsHour is
+        seen as the most credible newscast by the public.
       </Content>
       <Content>
         <Highlight>Label:</Highlight> True
@@ -96,14 +96,14 @@ const NliHome = () => {
       </Content>
       <Content>
         <Highlight>Explanation:</Highlight> The label here is true, which means
-        that most people think the premise is true from the context. So we want
-        to argue that the premise can be false in some circumstances. Potential
-        arguments can be that NewsHour is not seen as the most credible newscast
-        in the world (as suggested by the premise), but instead the context
-        actually says NewsHour is seen as the most credible newscast in the
-        country. This counterargument requires no specific knowledge, and the
-        flaw of the premise is not difficult to detect. So the data point is
-        classified as{" "}
+        that most people think the Hypothesis is true from the context. So we
+        want to argue that the Hypothesis can be false in some circumstances.
+        Potential arguments can be that NewsHour is not seen as the most
+        credible newscast in the world (as suggested by the Hypothesis), but
+        instead the context actually says NewsHour is seen as the most credible
+        newscast in the country. This counterargument requires no specific
+        knowledge, and the flaw of the Hypothesis is not difficult to detect. So
+        the data point is classified as{" "}
         <Highlight>
           A-A (I can come up with a counterargument and I know almost everyone
           can come up with my counterargument as well).
@@ -118,7 +118,7 @@ const NliHome = () => {
         the goal during children's soccer game.
       </Content>
       <Content>
-        <Highlight>Premise:</Highlight> A player passing the ball in a soccer
+        <Highlight>Hypothesis:</Highlight> A player passing the ball in a soccer
         game.
       </Content>
       <Content>
@@ -132,12 +132,12 @@ const NliHome = () => {
       </Content>
       <Content>
         <Highlight>Explanation:</Highlight> The label is False. So we want to
-        argue that how the premise is True based on the context. Possible
+        argue that how the Hypothesis is True based on the context. Possible
         arguments can be that Number 13 is in fact passing the ball to another
         player near the goal. The context does not exclude this possibility, and
-        thus the premise can be true under this context. It can be imagined that
-        most people will consider “kicking a soccer ball towards the goal” as
-        equivalent to “shooting for goal”. So if you do come up with the
+        thus the Hypothesis can be true under this context. It can be imagined
+        that most people will consider “kicking a soccer ball towards the goal”
+        as equivalent to “shooting for goal”. So if you do come up with the
         argument above, it should appear to you as high novelty.
       </Content>
       <Divider />
@@ -149,7 +149,7 @@ const NliHome = () => {
         friend.
       </Content>
       <Content>
-        <Highlight>Premise:</Highlight> "There is a man running."
+        <Highlight>Hypothesis:</Highlight> "There is a man running."
       </Content>
       <Content>
         <Highlight>Label:</Highlight> True
@@ -164,7 +164,7 @@ const NliHome = () => {
         <Highlight>Explanation:</Highlight> Here is a sample counterargument.
         The "run" in the context could simply mean that the man is
         "participating" in the marathon, not necessarily actually "running". So
-        the premise is not necessarily true.
+        the Hypothesis is not necessarily true.
         <br />
         <br />
         We classify this data point as{" "}
@@ -185,7 +185,7 @@ const NliHome = () => {
         the goal during children's soccer game.
       </Content>
       <Content>
-        <Highlight>Premise:</Highlight> A player passing the ball in a soccer
+        <Highlight>Hypothesis:</Highlight> A player passing the ball in a soccer
         game.
       </Content>
       <Content>
@@ -221,7 +221,7 @@ const NliHome = () => {
         <Highlight>Context:</Highlight> There is an apple on the table.
       </Content>
       <Content>
-        <Highlight>Premise:</Highlight> There is an apple.
+        <Highlight>Hypothesis:</Highlight> There is an apple.
       </Content>
       <Content>
         <Highlight>Label:</Highlight> True
@@ -234,7 +234,7 @@ const NliHome = () => {
       </Content>
       <Content>
         <Highlight>Explanation:</Highlight> There is no possible counterargument
-        since the premise can be strictly deducted from context.
+        since the Hypothesis can be strictly deducted from context.
       </Content>
     </>,
   ];
