@@ -8,6 +8,12 @@
   margin: 0px !important;
   font-family: -apple-system, BlinkMacSystemFont, sans-serif;
 } */
+:root {
+  --main-color: rgb(104, 117, 217);
+  --main-color-hover: rgb(104, 117, 217, 0.2);
+  --track-color: #ddd;
+  --mark-color: #aaaaaa;
+}
 
 html,
 body {
