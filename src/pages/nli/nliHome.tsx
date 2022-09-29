@@ -265,7 +265,7 @@ const NliHome = () => {
           </Arrow>
         </Arrows>
         {!disabled && (
-          <Link to={`/survey${search}`}>
+          <Link to={`/nlisurvey${search}`}>
             <Button
               // onClick={() => (window.location.href = "/survey")}
               padding="15px 20px"

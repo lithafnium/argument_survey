@@ -6,12 +6,13 @@ import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 // Your web app's Firebase configuration
 const config = {
-  apiKey: "AIzaSyCI0zL04S4ai5IbOxuH9mChgf4TCEVdNrU",
-  authDomain: "nlp-proposer.firebaseapp.com",
-  projectId: "nlp-proposer",
-  storageBucket: "nlp-proposer.appspot.com",
-  messagingSenderId: "296838568611",
-  appId: "1:296838568611:web:4715b67072b27226f17d16",
+  apiKey: "AIzaSyDksfKXsdc4hy4uHAdRwr62ecrB3edbZf8",
+  authDomain: "argument-survey.firebaseapp.com",
+  projectId: "argument-survey",
+  storageBucket: "argument-survey.appspot.com",
+  messagingSenderId: "804170673667",
+  appId: "1:804170673667:web:4e165a991955b84c87a836",
+  measurementId: "G-R1M05VNTF7",
 };
 
 const app = initializeApp(config);

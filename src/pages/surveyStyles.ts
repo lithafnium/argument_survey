@@ -185,7 +185,7 @@ export const Feedback = styled.textarea`
   height: 40px;
   border: 1px solid #dddddd;
   box-sizing: border-box;
-  height: 300px;
+  height: 150px;
 
   resize: vertical;
 

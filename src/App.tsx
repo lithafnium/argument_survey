@@ -8,6 +8,7 @@ import RedditHome from "@app/pages/reddit/redditHome";
 import NliHome from "@app/pages/nli/nliHome";
 
 import RedditSurvey from "@app/pages/reddit/redditSurvey";
+import NliSurvey from "@app/pages/nli/nliSurvey";
 
 import routes from "@app/shared/constants/routes";
 import { Navbar } from "@app/shared/components";
@@ -25,6 +26,9 @@ function App() {
         </Switch>
         <Switch>
           <Route exact path={routes.NLI} component={NliHome} />
+        </Switch>
+        <Switch>
+          <Route exact path={routes.NLISURVEY} component={NliSurvey} />
         </Switch>
       </Router>
     </>

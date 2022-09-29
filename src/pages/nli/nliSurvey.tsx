@@ -14,10 +14,17 @@ import {
   Divider,
   RowContainer,
 } from "@app/pages/surveyStyles";
+
+import { ArrowContainer, SurveyForm } from "@app/pages/survey";
+import { Button } from "@app/shared/components/index";
+
 import { db } from "@app/firebase";
 import { doc, collection, addDoc, setDoc } from "firebase/firestore";
-import reddit from "@app/shared/constants/reddit_sample_filtered_1800.json";
-import { ArrowContainer, SurveyForm } from "@app/pages/survey";
+import snli from "@app/shared/constants/snli.json";
+import mnli from "@app/shared/constants/mnli.json";
+
+import { Input } from "@app/shared/components/index";
+import { CATEGORIES, NOVELTY } from "@app/shared/constants/survey";
 
 interface Response {
   classification: string;
@@ -25,14 +32,14 @@ interface Response {
   explanation: string;
 }
 
-interface RedditQuestion {
-  title: string;
+interface NliQuestion {
   context: string;
-  response: string;
+  hypothesis: string;
+  label: string;
 }
 
-const RedditSurvey = () => {
-  const [questions, setQuestions] = useState<RedditQuestion[]>([]);
+const NliSurvey = () => {
+  const [questions, setQuestions] = useState<NliQuestion[]>([]);
   const [responses, setResponses] = useState<Response[]>([]);
   const [index, setIndex] = useState(1);
   const [finished, setFinished] = useState(false);
@@ -41,23 +48,39 @@ const RedditSurvey = () => {
   const [email, setEmail] = useState("");
 
   // @ts-ignore
-  const total = reddit.length;
+  const snlitotal = snli.length;
+  const mnlitotal = mnli.length;
   useEffect(() => {
     let arr = [];
+    while (arr.length < 5) {
+      let r = Math.floor(Math.random() * snlitotal) + 1;
+      if (arr.indexOf(r) === -1) arr.push(r);
+    }
+
     while (arr.length < 10) {
-      let r = Math.floor(Math.random() * total) + 1;
+      let r = Math.floor(Math.random() * mnlitotal) + 1;
       if (arr.indexOf(r) === -1) arr.push(r);
     }
 
     // console.log(reddit[0]);
-    let qs: RedditQuestion[] = [];
-    arr.forEach((e, _) => {
+    let qs: NliQuestion[] = [];
+    arr.forEach((e, i) => {
       // @ts-ignore
-      let redditObj = reddit[e];
+      let obj;
+      if (i < 5) {
+        obj = snli[e];
+      } else {
+        obj = mnli[e];
+      }
+      let label =
+        // @ts-ignore
+        obj["label_counter"]["c"] > obj["label_counter"]["e"]
+          ? "False"
+          : "True";
       let questionObj = {
-        title: redditObj["title"],
-        context: redditObj["selftext"],
-        response: redditObj["good_comments"][0]["body"],
+        context: obj["example"]["premise"],
+        hypothesis: obj["example"]["hypothesis"],
+        label,
       };
       qs.push(questionObj);
     });
@@ -96,9 +119,9 @@ const RedditSurvey = () => {
       let question = questions[index];
 
       return {
-        questionTitle: question.title,
-        questionContext: question.context,
-        questionResponse: question.response,
+        questionTitle: question.context,
+        questionHypothesis: question.hypothesis,
+        questionLabel: question.label,
         classification: val.classification,
         novelty: val.novelty,
         explanation: val.explanation,
@@ -110,7 +133,7 @@ const RedditSurvey = () => {
       email: email,
     };
 
-    addDoc(collection(db, "redditResponses"), docData);
+    addDoc(collection(db, "nliResponses"), docData);
     setSubmitted(true);
   };
 
@@ -128,13 +151,14 @@ const RedditSurvey = () => {
           {questions.length > 0 && (
             <div>
               <Content>
-                <Highlight>Title:</Highlight> {questions[index - 1].title}
-              </Content>
-              <Content>
                 <Highlight>Context:</Highlight> {questions[index - 1].context}
               </Content>
               <Content>
-                <Highlight>Response:</Highlight> {questions[index - 1].response}
+                <Highlight>Hypothesis:</Highlight>{" "}
+                {questions[index - 1].hypothesis}
+              </Content>
+              <Content>
+                <Highlight>Label:</Highlight> {questions[index - 1].label}
               </Content>
             </div>
           )}
@@ -150,11 +174,11 @@ const RedditSurvey = () => {
               finished={finished}
               handleSubmit={handleSubmit}
             />
-          )}{" "}
+          )}
         </ContainerInner>
       </Container>
     </div>
   );
 };
 
-export default RedditSurvey;
+export default NliSurvey;
