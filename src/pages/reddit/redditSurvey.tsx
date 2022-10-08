@@ -123,6 +123,7 @@ const RedditSurvey = () => {
               index={index}
               updateIndex={updateIndex}
               length={questions.length}
+              responses={responses}
             />
           )}
           {questions.length > 0 && (

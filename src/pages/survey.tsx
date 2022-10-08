@@ -33,8 +33,18 @@ interface Props {
   index: number;
   updateIndex: (adder: number) => void;
   length: number;
+  responses: Response[];
 }
-export const ArrowContainer = ({ index, updateIndex, length }: Props) => {
+export const ArrowContainer = ({
+  index,
+  updateIndex,
+  length,
+  responses,
+}: Props) => {
+  const disableForward = () => {
+    let response = responses[index - 1];
+    return response.classification != "" && response.explanation != "";
+  };
   return (
     <Arrows>
       <Arrow onClick={() => updateIndex(-1)} disabled={index - 1 === 0}>
@@ -43,9 +53,9 @@ export const ArrowContainer = ({ index, updateIndex, length }: Props) => {
       Question {index} of {length}
       <Arrow
         onClick={() => {
-          updateIndex(1);
+          if (!(index === length || !disableForward())) updateIndex(1);
         }}
-        disabled={index === length}
+        disabled={index === length || !disableForward()}
       >
         <BsFillCaretRightFill />
       </Arrow>
@@ -176,27 +186,33 @@ export const SurveyForm = ({
           />
         </div>
       </div>
-      <p>Enter in your email (optional) before submitting your responses!</p>
-      <Input
-        value={email}
-        placeholder="Enter your email here..."
-        borderRadius="3px"
-        width="100%"
-        onChange={(e) => setEmail(e.target.value)}
-      />
-      <Button
-        // !finished
-        // !(finished && validHit)
-        disabled={submitted || !finished}
-        onClick={() => handleSubmit()}
-        padding="10px 20px"
-        borderRadius="5px"
-        backgroundColor="#004c7d"
-        color="#eeeeee"
-        margin="1em 0"
-      >
-        Submit
-      </Button>
+      {finished && (
+        <>
+          <p>
+            Enter in your email (optional) before submitting your responses!
+          </p>
+          <Input
+            value={email}
+            placeholder="Enter your email here..."
+            borderRadius="3px"
+            width="100%"
+            onChange={(e) => setEmail(e.target.value)}
+          />
+          <Button
+            // !finished
+            // !(finished && validHit)
+            disabled={submitted || !finished}
+            onClick={() => handleSubmit()}
+            padding="10px 20px"
+            borderRadius="5px"
+            backgroundColor="#004c7d"
+            color="#eeeeee"
+            margin="1em 0"
+          >
+            Submit
+          </Button>
+        </>
+      )}
       {submitted && (
         <div>
           <p>Submitted! Thank you for testing out our survey!</p>

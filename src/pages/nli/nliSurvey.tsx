@@ -23,9 +23,6 @@ import { doc, collection, addDoc, setDoc } from "firebase/firestore";
 import snli from "@app/shared/constants/snli.json";
 import mnli from "@app/shared/constants/mnli.json";
 
-import { Input } from "@app/shared/components/index";
-import { CATEGORIES, NOVELTY } from "@app/shared/constants/survey";
-
 interface Response {
   classification: string;
   novelty: string;
