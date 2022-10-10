@@ -15,7 +15,7 @@ import {
   RowContainer,
 } from "@app/pages/surveyStyles";
 import { db } from "@app/firebase";
-import { doc, collection, addDoc, setDoc } from "firebase/firestore";
+import { doc, collection, addDoc, getDoc, setDoc } from "firebase/firestore";
 import reddit from "@app/shared/constants/reddit_sample_filtered_1800.json";
 import { ArrowContainer, SurveyForm } from "@app/pages/survey";
 
@@ -29,6 +29,7 @@ interface RedditQuestion {
   title: string;
   context: string;
   response: string;
+  jsonIndex: number;
 }
 
 const RedditSurvey = () => {
@@ -43,39 +44,53 @@ const RedditSurvey = () => {
   // @ts-ignore
   const total = reddit.length;
   useEffect(() => {
-    let arr = [];
-    while (arr.length < 10) {
-      let r = Math.floor(Math.random() * total) + 1;
-      if (arr.indexOf(r) === -1) arr.push(r);
-    }
+    const getCount = async () => {
+      const docRef = doc(db, "indexes", "reddit");
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        let count = docSnap.data().count;
+        let arr = [];
+        for (let i = count * 10; i < count * 10 + 10; i++) {
+          arr.push(i % total);
+        }
+        let qs: RedditQuestion[] = [];
+        arr.forEach((e, _) => {
+          // @ts-ignore
+          let redditObj = reddit[e];
+          let questionObj = {
+            title: redditObj["title"],
+            context: redditObj["selftext"],
+            response: redditObj["good_comments"][0]["body"],
+            jsonIndex: e,
+          };
+          qs.push(questionObj);
+        });
+
+        let copy: Response[] = [];
+        [...qs].forEach(() => {
+          copy.push({
+            classification: "",
+            novelty: "",
+            explanation: "",
+          });
+        });
+
+        setQuestions(qs);
+        setResponses(copy);
+        await setDoc(docRef, { count: count + 1 });
+      }
+    };
+    getCount();
 
     // console.log(reddit[0]);
-    let qs: RedditQuestion[] = [];
-    arr.forEach((e, _) => {
-      // @ts-ignore
-      let redditObj = reddit[e];
-      let questionObj = {
-        title: redditObj["title"],
-        context: redditObj["selftext"],
-        response: redditObj["good_comments"][0]["body"],
-      };
-      qs.push(questionObj);
-    });
-
-    let copy: Response[] = [];
-    [...qs].forEach(() => {
-      copy.push({
-        classification: "",
-        novelty: "",
-        explanation: "",
-      });
-    });
-
-    setQuestions(qs);
-    setResponses(copy);
   }, []);
 
-  const updateIndex = (adder: number) => {
+  const updateIndex = async (adder: number) => {
+    // const docRef = doc(db, "indexes", "reddit");
+    // const docSnap = await getDoc(docRef);
+    // if (docSnap.exists()) {
+    //   console.log(docSnap.data().count);
+    // }
     if (
       // @ts-ignore
       (index + adder <= questions.length && adder > 0) ||
@@ -99,6 +114,7 @@ const RedditSurvey = () => {
         questionTitle: question.title,
         questionContext: question.context,
         questionResponse: question.response,
+        jsonIndex: question.jsonIndex,
         classification: val.classification,
         novelty: val.novelty,
         explanation: val.explanation,
@@ -118,11 +134,11 @@ const RedditSurvey = () => {
     <div>
       <Container>
         <ContainerInner>
-          {questions.length > 0 && (
+          {responses.length > 0 && (
             <ArrowContainer
               index={index}
               updateIndex={updateIndex}
-              length={questions.length}
+              length={responses.length}
               responses={responses}
             />
           )}

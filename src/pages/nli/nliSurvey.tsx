@@ -19,7 +19,7 @@ import { ArrowContainer, SurveyForm } from "@app/pages/survey";
 import { Button } from "@app/shared/components/index";
 
 import { db } from "@app/firebase";
-import { doc, collection, addDoc, setDoc } from "firebase/firestore";
+import { doc, collection, addDoc, setDoc, getDoc } from "firebase/firestore";
 import snli from "@app/shared/constants/snli.json";
 import mnli from "@app/shared/constants/mnli.json";
 
@@ -33,6 +33,8 @@ interface NliQuestion {
   context: string;
   hypothesis: string;
   label: string;
+  jsonIndex: number;
+  isSnli: boolean;
 }
 
 const NliSurvey = () => {
@@ -48,51 +50,66 @@ const NliSurvey = () => {
   const snlitotal = snli.length;
   const mnlitotal = mnli.length;
   useEffect(() => {
-    let arr = [];
-    while (arr.length < 5) {
-      let r = Math.floor(Math.random() * snlitotal) + 1;
-      if (arr.indexOf(r) === -1) arr.push(r);
-    }
+    const getCount = async () => {
+      const mnliRef = doc(db, "indexes", "mnli");
+      const snliRef = doc(db, "indexes", "snli");
+      const mnliSnap = await getDoc(mnliRef);
+      const snliSnap = await getDoc(snliRef);
 
-    while (arr.length < 10) {
-      let r = Math.floor(Math.random() * mnlitotal) + 1;
-      if (arr.indexOf(r) === -1) arr.push(r);
-    }
+      if (mnliSnap.exists() && snliSnap.exists()) {
+        let mnliCount = mnliSnap.data().count;
+        let snliCount = snliSnap.data().count;
 
-    // console.log(reddit[0]);
-    let qs: NliQuestion[] = [];
-    arr.forEach((e, i) => {
-      // @ts-ignore
-      let obj;
-      if (i < 5) {
-        obj = snli[e];
-      } else {
-        obj = mnli[e];
+        let arr = [];
+
+        for (let i = mnliCount * 5; i < mnliCount * 5 + 5; i++) {
+          arr.push(i % mnlitotal);
+        }
+        for (let i = snliCount * 5; i < snliCount * 5 + 5; i++) {
+          arr.push(i % snlitotal);
+        }
+
+        let qs: NliQuestion[] = [];
+        arr.forEach((e, i) => {
+          // @ts-ignore
+          let obj;
+          if (i < 5) {
+            obj = snli[e];
+          } else {
+            obj = mnli[e];
+          }
+          let label =
+            // @ts-ignore
+            obj["label_counter"]["c"] > obj["label_counter"]["e"]
+              ? "False"
+              : "True";
+          let questionObj = {
+            context: obj["example"]["premise"],
+            hypothesis: obj["example"]["hypothesis"],
+            label,
+            isSnli: i < 5,
+            jsonIndex: e,
+          };
+          qs.push(questionObj);
+        });
+
+        let copy: Response[] = [];
+        [...qs].forEach(() => {
+          copy.push({
+            classification: "",
+            novelty: "",
+            explanation: "",
+          });
+        });
+
+        setQuestions(qs);
+        setResponses(copy);
+        await setDoc(mnliRef, { count: mnliCount + 1 });
+        await setDoc(snliRef, { count: snliCount + 1 });
       }
-      let label =
-        // @ts-ignore
-        obj["label_counter"]["c"] > obj["label_counter"]["e"]
-          ? "False"
-          : "True";
-      let questionObj = {
-        context: obj["example"]["premise"],
-        hypothesis: obj["example"]["hypothesis"],
-        label,
-      };
-      qs.push(questionObj);
-    });
+    };
 
-    let copy: Response[] = [];
-    [...qs].forEach(() => {
-      copy.push({
-        classification: "",
-        novelty: "",
-        explanation: "",
-      });
-    });
-
-    setQuestions(qs);
-    setResponses(copy);
+    getCount();
   }, []);
 
   const updateIndex = (adder: number) => {
@@ -119,6 +136,8 @@ const NliSurvey = () => {
         questionTitle: question.context,
         questionHypothesis: question.hypothesis,
         questionLabel: question.label,
+        isSnli: question.isSnli,
+        jsonIndex: question.jsonIndex,
         classification: val.classification,
         novelty: val.novelty,
         explanation: val.explanation,
@@ -138,11 +157,12 @@ const NliSurvey = () => {
     <div>
       <Container>
         <ContainerInner>
-          {questions.length > 0 && (
+          {responses.length > 0 && (
             <ArrowContainer
               index={index}
               updateIndex={updateIndex}
               length={questions.length}
+              responses={responses}
             />
           )}
           {questions.length > 0 && (
