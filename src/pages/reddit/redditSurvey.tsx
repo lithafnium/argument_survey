@@ -47,6 +47,7 @@ const RedditSurvey = () => {
     const getCount = async () => {
       const docRef = doc(db, "indexes", "reddit");
       const docSnap = await getDoc(docRef);
+
       if (docSnap.exists()) {
         let count = docSnap.data().count;
         let arr = [];
@@ -81,16 +82,9 @@ const RedditSurvey = () => {
       }
     };
     getCount();
-
-    // console.log(reddit[0]);
   }, []);
 
   const updateIndex = async (adder: number) => {
-    // const docRef = doc(db, "indexes", "reddit");
-    // const docSnap = await getDoc(docRef);
-    // if (docSnap.exists()) {
-    //   console.log(docSnap.data().count);
-    // }
     if (
       // @ts-ignore
       (index + adder <= questions.length && adder > 0) ||
