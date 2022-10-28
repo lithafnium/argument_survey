@@ -83,7 +83,7 @@ export const Icon = styled.div`
 `;
 
 export const Arrows = styled.div`
-  width: 200px;
+  width: 250px;
   display: flex;
   justify-content: space-between;
   align-items: center;

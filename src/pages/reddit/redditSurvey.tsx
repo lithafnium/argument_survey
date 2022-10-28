@@ -18,19 +18,7 @@ import { db } from "@app/firebase";
 import { doc, collection, addDoc, getDoc, setDoc } from "firebase/firestore";
 import reddit from "@app/shared/constants/reddit_sample_filtered_1800.json";
 import { ArrowContainer, SurveyForm } from "@app/pages/survey";
-
-interface Response {
-  classification: string;
-  novelty: string;
-  explanation: string;
-}
-
-interface RedditQuestion {
-  title: string;
-  context: string;
-  response: string;
-  jsonIndex: number;
-}
+import { Response, RedditQuestion } from "@app/@types/survey";
 
 const RedditSurvey = () => {
   const [questions, setQuestions] = useState<RedditQuestion[]>([]);
@@ -40,6 +28,7 @@ const RedditSurvey = () => {
   const [feedback, setFeedback] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [email, setEmail] = useState("");
+  const [argumentIndex, setArgumentIndex] = useState(1);
 
   // @ts-ignore
   const total = reddit.length;
@@ -71,8 +60,14 @@ const RedditSurvey = () => {
         [...qs].forEach(() => {
           copy.push({
             classification: "",
-            novelty: "",
+            novelty: 1,
             explanation: "",
+            evaluation: [],
+            showGenerated: false,
+            postClassification: "",
+            postNovelty: 1,
+            postExplanation: "",
+            argumentFinished: false,
           });
         });
 
@@ -83,7 +78,21 @@ const RedditSurvey = () => {
     };
     getCount();
   }, []);
-
+  const updateArgumentIndex = (adder: number) => {
+    if (
+      // @ts-ignore
+      (argumentIndex + adder <= responses[index - 1]["evaluation"].length &&
+        adder > 0) ||
+      (argumentIndex + adder >= 1 && adder < 0)
+    ) {
+      if (argumentIndex + adder == responses[index - 1]["evaluation"].length) {
+        let copy = [...responses];
+        copy[index - 1]["argumentFinished"] = true;
+        setResponses(copy);
+      }
+      setArgumentIndex(argumentIndex + adder);
+    }
+  };
   const updateIndex = async (adder: number) => {
     if (
       // @ts-ignore
@@ -130,10 +139,18 @@ const RedditSurvey = () => {
         <ContainerInner>
           {responses.length > 0 && (
             <ArrowContainer
+              header={"Question"}
               index={index}
               updateIndex={updateIndex}
-              length={responses.length}
-              responses={responses}
+              length={questions.length}
+              disableForward={() => {
+                let response = responses[index - 1];
+                return (
+                  response.classification != "" &&
+                  response.explanation != "" &&
+                  response.argumentFinished
+                );
+              }}
             />
           )}
           {questions.length > 0 && (
@@ -160,8 +177,11 @@ const RedditSurvey = () => {
               submitted={submitted}
               finished={finished}
               handleSubmit={handleSubmit}
+              argumentIndex={argumentIndex}
+              setArgumentIndex={updateArgumentIndex}
+              questions={[]}
             />
-          )}{" "}
+          )}
         </ContainerInner>
       </Container>
     </div>

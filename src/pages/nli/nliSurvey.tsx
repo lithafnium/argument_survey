@@ -2,110 +2,86 @@ import React, { useState, useEffect } from "react";
 import {
   Container,
   ContainerInner,
-  ContentContainer,
-  Group,
-  Arrow,
-  Arrows,
   Content,
-  List,
   Highlight,
-  SelectionRow,
-  Feedback,
   Divider,
-  RowContainer,
 } from "@app/pages/surveyStyles";
 
 import { ArrowContainer, SurveyForm } from "@app/pages/survey";
-import { Button } from "@app/shared/components/index";
 
 import { db } from "@app/firebase";
 import { doc, collection, addDoc, setDoc, getDoc } from "firebase/firestore";
-import snli from "@app/shared/constants/snli.json";
-import mnli from "@app/shared/constants/mnli.json";
-
-interface Response {
-  classification: string;
-  novelty: string;
-  explanation: string;
-}
-
-interface NliQuestion {
-  context: string;
-  hypothesis: string;
-  label: string;
-  jsonIndex: number;
-  isSnli: boolean;
-}
+import nli_train from "@app/shared/constants/nli_train_test.json";
+import { Response, NliQuestion } from "@app/@types/survey";
 
 const NliSurvey = () => {
   const [questions, setQuestions] = useState<NliQuestion[]>([]);
   const [responses, setResponses] = useState<Response[]>([]);
   const [index, setIndex] = useState(1);
   const [finished, setFinished] = useState(false);
-  const [feedback, setFeedback] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [email, setEmail] = useState("");
+  const [argumentIndex, setArgumentIndex] = useState(1);
 
   // @ts-ignore
-  const snlitotal = snli.length;
-  const mnlitotal = mnli.length;
+  const nlitotal = Object.keys(nli_train["context"]).length;
   useEffect(() => {
     const getCount = async () => {
-      const mnliRef = doc(db, "indexes", "mnli");
-      const snliRef = doc(db, "indexes", "snli");
-      const mnliSnap = await getDoc(mnliRef);
-      const snliSnap = await getDoc(snliRef);
+      const nliRef = doc(db, "indexes", "nli");
+      const nliSnap = await getDoc(nliRef);
 
-      if (mnliSnap.exists() && snliSnap.exists()) {
-        let mnliCount = mnliSnap.data().count;
-        let snliCount = snliSnap.data().count;
-
-        let arr = [];
-
-        for (let i = mnliCount * 5; i < mnliCount * 5 + 5; i++) {
-          arr.push(i % mnlitotal);
-        }
-        for (let i = snliCount * 5; i < snliCount * 5 + 5; i++) {
-          arr.push(i % snlitotal);
-        }
-
+      if (nliSnap.exists()) {
+        let nliCount = nliSnap.data().index;
+        // let arr = [];
         let qs: NliQuestion[] = [];
-        arr.forEach((e, i) => {
-          // @ts-ignore
-          let obj;
-          if (i < 5) {
-            obj = snli[e];
-          } else {
-            obj = mnli[e];
-          }
-          let label =
-            // @ts-ignore
-            obj["label_counter"]["c"] > obj["label_counter"]["e"]
-              ? "False"
-              : "True";
+        for (let i = nliCount * 10; i < nliCount * 10 + 10; i++) {
           let questionObj = {
-            context: obj["example"]["premise"],
-            hypothesis: obj["example"]["hypothesis"],
-            label,
-            isSnli: i < 5,
-            jsonIndex: e,
+            // @ts-ignore
+            context: nli_train["context"][i % nlitotal],
+            // @ts-ignore
+            hypothesis: nli_train["hypothesis"][i % nlitotal],
+            // @ts-ignore
+            label: nli_train["label"][i % nlitotal],
+            // @ts-ignore
+            isSnli:
+              // @ts-ignore
+              nli_train["dataset"][i % nlitotal] === "snli" ? true : false,
+            jsonIndex: i % nlitotal,
+            // @ts-ignore
+            counterarguments: nli_train["counterargument"][i % nlitotal],
           };
           qs.push(questionObj);
-        });
+        }
 
         let copy: Response[] = [];
-        [...qs].forEach(() => {
+        [...qs].forEach((e, _) => {
+          let jsonIndex = e.jsonIndex;
+          // @ts-ignore
+          // let evaluation = nli_train["counterargument"][jsonIndex];
+          let evaluation = [];
+          for (let i = 0; i < 4; i++) {
+            evaluation.push({
+              clarity: 1,
+              coherence: 1,
+              novelty: 1,
+              relevance: 1,
+            });
+          }
           copy.push({
             classification: "",
-            novelty: "",
+            novelty: 1,
             explanation: "",
+            evaluation: evaluation,
+            showGenerated: false,
+            postClassification: "",
+            postNovelty: 1,
+            postExplanation: "",
+            argumentFinished: false,
           });
         });
-
         setQuestions(qs);
         setResponses(copy);
-        await setDoc(mnliRef, { count: mnliCount + 1 });
-        await setDoc(snliRef, { count: snliCount + 1 });
+        await setDoc(nliRef, { index: nliCount + 1 });
       }
     };
 
@@ -125,6 +101,23 @@ const NliSurvey = () => {
         setFinished(false);
       }
       setIndex(index + adder);
+      setArgumentIndex(1);
+    }
+  };
+
+  const updateArgumentIndex = (adder: number) => {
+    if (
+      // @ts-ignore
+      (argumentIndex + adder <= responses[index - 1]["evaluation"].length &&
+        adder > 0) ||
+      (argumentIndex + adder >= 1 && adder < 0)
+    ) {
+      if (argumentIndex + adder == responses[index - 1]["evaluation"].length) {
+        let copy = [...responses];
+        copy[index - 1]["argumentFinished"] = true;
+        setResponses(copy);
+      }
+      setArgumentIndex(argumentIndex + adder);
     }
   };
 
@@ -159,10 +152,18 @@ const NliSurvey = () => {
         <ContainerInner>
           {responses.length > 0 && (
             <ArrowContainer
+              header={"Question"}
               index={index}
               updateIndex={updateIndex}
               length={questions.length}
-              responses={responses}
+              disableForward={() => {
+                let response = responses[index - 1];
+                return (
+                  response.classification != "" &&
+                  response.explanation != "" &&
+                  response.argumentFinished
+                );
+              }}
             />
           )}
           {questions.length > 0 && (
@@ -190,6 +191,9 @@ const NliSurvey = () => {
               submitted={submitted}
               finished={finished}
               handleSubmit={handleSubmit}
+              argumentIndex={argumentIndex}
+              setArgumentIndex={updateArgumentIndex}
+              questions={questions}
             />
           )}
         </ContainerInner>

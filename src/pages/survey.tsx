@@ -1,56 +1,37 @@
 import React from "react";
 import {
-  Container,
-  ContainerInner,
-  ContentContainer,
-  Group,
   Arrow,
   Arrows,
-  Content,
-  List,
-  Highlight,
   SelectionRow,
   Feedback,
   Divider,
-  RowContainer,
 } from "@app/pages/surveyStyles";
-import {
-  BsFillCaretLeftFill,
-  BsFillCaretRightFill,
-  BsTextParagraph,
-} from "react-icons/bs";
-import {
-  StyledContainer,
-  StyledSlider,
-  Track,
-  Mark,
-  Thumb,
-} from "@app/shared/components/slider";
+import { BsFillCaretLeftFill, BsFillCaretRightFill } from "react-icons/bs";
+import { Slider } from "@app/shared/components/slider";
 import { Input, Button } from "@app/shared/components/index";
-import { CATEGORIES, NOVELTY } from "@app/shared/constants/survey";
-
+import { CATEGORIES } from "@app/shared/constants/survey";
+import CounterArguments from "@app/pages/counterArguments";
+import { Response, NliQuestion } from "@app/@types/survey";
 interface Props {
+  header: string;
   index: number;
   updateIndex: (adder: number) => void;
   length: number;
-  responses: Response[];
+  disableForward: () => boolean;
 }
 export const ArrowContainer = ({
+  header,
   index,
   updateIndex,
   length,
-  responses,
+  disableForward,
 }: Props) => {
-  const disableForward = () => {
-    let response = responses[index - 1];
-    return response.classification != "" && response.explanation != "";
-  };
   return (
     <Arrows>
       <Arrow onClick={() => updateIndex(-1)} disabled={index - 1 === 0}>
         <BsFillCaretLeftFill />
       </Arrow>
-      Question {index} of {length}
+      {header} {index} of {length}
       <Arrow
         onClick={() => {
           if (!(index === length || !disableForward())) updateIndex(1);
@@ -63,12 +44,6 @@ export const ArrowContainer = ({
   );
 };
 
-interface Response {
-  classification: string;
-  novelty: string;
-  explanation: string;
-}
-
 interface SurveyProps {
   responses: Response[];
   setResponses: React.Dispatch<React.SetStateAction<Response[]>>;
@@ -78,8 +53,10 @@ interface SurveyProps {
   submitted: boolean;
   finished: boolean;
   handleSubmit: () => void;
+  argumentIndex: number;
+  setArgumentIndex: (adder: number) => void;
+  questions: NliQuestion[];
 }
-
 export const SurveyForm = ({
   responses,
   setResponses,
@@ -89,9 +66,23 @@ export const SurveyForm = ({
   submitted,
   finished,
   handleSubmit,
+  argumentIndex,
+  setArgumentIndex,
+  questions,
 }: SurveyProps) => {
-  return (
-    <div>
+  const updateData = (value: number | readonly number[], type: string) => {
+    let copy = [...responses];
+    let evaluation = copy[index - 1]["evaluation"][argumentIndex - 1];
+
+    let copyEvaluation = { ...evaluation, [type]: value };
+
+    copy[index - 1]["evaluation"][argumentIndex - 1] = copyEvaluation;
+
+    setResponses(copy);
+  };
+
+  const Response = (useNew: boolean) => {
+    return (
       <div>
         <h3>
           Based on your reasoning, please classify the data point into one of
@@ -103,13 +94,24 @@ export const SurveyForm = ({
               <SelectionRow key={i}>
                 <input
                   checked={
-                    responses[index - 1]["classification"] == CATEGORIES[i]
+                    useNew
+                      ? responses[index - 1]["postClassification"] ==
+                        CATEGORIES[i]
+                      : responses[index - 1]["classification"] == CATEGORIES[i]
                   }
                   onChange={(_) => {
                     let copy = [...responses];
-                    copy[index - 1]["classification"] = CATEGORIES[i];
+                    copy[index - 1]["postClassification"] = CATEGORIES[i];
+                    if (!useNew) {
+                      copy[index - 1]["classification"] = CATEGORIES[i];
+                    }
+                    if (i !== 0) {
+                      copy[index - 1]["postNovelty"] = 1;
+                      if (!useNew) {
+                        copy[index - 1]["novelty"] = 1;
+                      }
+                    }
 
-                    if (i !== 0) copy[index - 1]["novelty"] = "";
                     setResponses(copy);
                   }}
                   name={"categories" + i}
@@ -123,52 +125,42 @@ export const SurveyForm = ({
           })}
         </div>
         <Divider />
-        {responses[index - 1]["classification"] === CATEGORIES[0] && (
-          <div>
-            <h3>Enter in the "novelty" level of your counterargument</h3>
-            <StyledContainer>
-              <StyledSlider
-                // defaultValue={[50, 75]}
-                value={
-                  NOVELTY.indexOf(responses[index - 1]["novelty"]) !== -1
-                    ? NOVELTY.indexOf(responses[index - 1]["novelty"]) + 1
-                    : 1
-                }
-                min={1}
-                max={5}
-                marks
-                renderTrack={Track}
-                renderThumb={Thumb}
-                renderMark={Mark}
-                onBeforeChange={(value, _) => {
-                  let copy = [...responses];
-                  // @ts-ignore
-                  copy[index - 1]["novelty"] = NOVELTY[value - 1];
-                  setResponses(copy);
-                }}
-                onChange={(value, _) => {
-                  let copy = [...responses];
-                  // @ts-ignore
-                  copy[index - 1]["novelty"] = NOVELTY[value - 1];
-                  setResponses(copy);
-                }}
-              />
-            </StyledContainer>
-            <div
-              style={{
-                display: "flex",
-                width: "100%",
-                justifyContent: "space-between",
-              }}
-            >
-              <p style={{ width: "15%" }}>
-                Almost everyone can come up with my counterargument.
-              </p>
-              <p style={{ width: "15%" }}>
-                Almost no one can come up with my counterargument.
-              </p>
-            </div>
-          </div>
+        {(useNew
+          ? responses[index - 1]["postClassification"] === CATEGORIES[0]
+          : responses[index - 1]["classification"] === CATEGORIES[0]) && (
+          <Slider
+            header={"Enter in the 'novelty' level of your counterargument"}
+            min={1}
+            max={5}
+            value={
+              useNew
+                ? responses[index - 1]["postNovelty"]
+                : responses[index - 1]["novelty"]
+            }
+            beforeChange={(value: number | readonly number[], i: number) => {
+              let copy = [...responses];
+              // @ts-ignore
+              copy[index - 1]["postNovelty"] = value;
+              // @ts-ignore
+              if (!useNew) copy[index - 1]["novelty"] = value;
+              setResponses(copy);
+            }}
+            onChange={(value: number | readonly number[], i: number) => {
+              let copy = [...responses];
+              // @ts-ignore
+              copy[index - 1]["postNovelty"] = value;
+              // @ts-ignore
+              if (!useNew) copy[index - 1]["novelty"] = value;
+              setResponses(copy);
+            }}
+            headers={[
+              "Almost everyone can come up with my counterargument.",
+              "",
+              "",
+              "",
+              "Almost no one can come up with my counterargument.",
+            ]}
+          />
         )}
         <div>
           <h3>
@@ -177,14 +169,75 @@ export const SurveyForm = ({
           </h3>
           <Feedback
             placeholder="Enter in your explanation here"
-            value={responses[index - 1]["explanation"]}
+            value={
+              useNew
+                ? responses[index - 1]["postExplanation"]
+                : responses[index - 1]["explanation"]
+            }
             onChange={(e) => {
               let copy = [...responses];
-              copy[index - 1]["explanation"] = e.target.value;
+              copy[index - 1]["postExplanation"] = e.target.value;
+              if (!useNew) copy[index - 1]["explanation"] = e.target.value;
               setResponses(copy);
             }}
           />
         </div>
+      </div>
+    );
+  };
+
+  return (
+    <div>
+      <div>
+        {!responses[index - 1]["showGenerated"] && Response(false)}
+        {responses[index - 1]["explanation"] !== "" &&
+          responses[index - 1]["classification"] !== "" && (
+            <Button
+              // !finished
+              // !(finished && validHit)
+              onClick={() => {
+                let copy = [...responses];
+                copy[index - 1]["showGenerated"] = true;
+                setResponses(copy);
+              }}
+              padding="10px 20px"
+              borderRadius="5px"
+              backgroundColor="#004c7d"
+              color="#eeeeee"
+              margin="1em 0"
+            >
+              Commit Responses and View Generated Counter Arguments
+            </Button>
+          )}
+        {responses[index - 1]["showGenerated"] && (
+          <div>
+            <ArrowContainer
+              header={"Counterargument"}
+              index={argumentIndex}
+              updateIndex={setArgumentIndex}
+              length={responses[index - 1]["evaluation"].length}
+              disableForward={() => {
+                return true;
+              }}
+            />
+            <CounterArguments
+              counterArgument={
+                questions[index - 1]["counterarguments"][argumentIndex - 1]
+              }
+              updateData={updateData}
+              argumentData={
+                responses[index - 1]["evaluation"][argumentIndex - 1]
+              }
+            />
+          </div>
+        )}
+        {responses[index - 1]["argumentFinished"] && (
+          <h3>
+            Based off of the generated counter-arguments, please reevaluate your
+            responses if you have changed your opinion.
+          </h3>
+        )}
+        {responses[index - 1]["argumentFinished"] && Response(true)}
       </div>
       {finished && (
         <>

@@ -56,3 +56,61 @@ export const StyledContainer = styled.div`
   max-width: 100%;
   padding-right: 8px;
 `;
+
+interface SliderProps {
+  header: string;
+  min: number;
+  max: number;
+  value: number | readonly number[];
+  beforeChange: (value: number | readonly number[], index: number) => void;
+  onChange: (value: number | readonly number[], index: number) => void;
+  headers: string[];
+}
+
+export const Slider = ({
+  header,
+  min,
+  max,
+  value,
+  beforeChange,
+  onChange,
+  headers,
+}: SliderProps) => {
+  return (
+    <div>
+      <h3>{header}</h3>
+      <StyledContainer>
+        <StyledSlider
+          value={value}
+          min={min}
+          max={max}
+          marks
+          renderTrack={Track}
+          renderThumb={Thumb}
+          renderMark={Mark}
+          onBeforeChange={(value, i) => {
+            beforeChange(value, i);
+          }}
+          onChange={(value, i) => {
+            onChange(value, i);
+          }}
+        />
+      </StyledContainer>
+      <div
+        style={{
+          display: "flex",
+          width: "100%",
+          justifyContent: "space-between",
+        }}
+      >
+        {headers.map((e, i) => {
+          return (
+            <p key={i} style={{ width: "15%" }}>
+              {e}
+            </p>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
