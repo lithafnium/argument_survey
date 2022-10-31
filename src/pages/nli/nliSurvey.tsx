@@ -4,7 +4,7 @@ import {
   ContainerInner,
   Content,
   Highlight,
-  Divider,
+  ContentCard,
 } from "@app/pages/surveyStyles";
 
 import { ArrowContainer, SurveyForm } from "@app/pages/survey";
@@ -13,6 +13,7 @@ import { db } from "@app/firebase";
 import { doc, collection, addDoc, setDoc, getDoc } from "firebase/firestore";
 import nli_train from "@app/shared/constants/nli_train_test.json";
 import { Response, NliQuestion } from "@app/@types/survey";
+import { CATEGORIES } from "@app/shared/constants/survey";
 
 const NliSurvey = () => {
   const [questions, setQuestions] = useState<NliQuestion[]>([]);
@@ -159,15 +160,16 @@ const NliSurvey = () => {
               disableForward={() => {
                 let response = responses[index - 1];
                 return (
-                  response.classification != "" &&
-                  response.explanation != "" &&
-                  response.argumentFinished
+                  (response.classification != "" &&
+                    response.explanation != "" &&
+                    response.argumentFinished) ||
+                  response.classification === CATEGORIES[3]
                 );
               }}
             />
           )}
           {questions.length > 0 && (
-            <div>
+            <ContentCard>
               <Content>
                 <Highlight>Context:</Highlight> {questions[index - 1].context}
               </Content>
@@ -178,9 +180,8 @@ const NliSurvey = () => {
               <Content>
                 <Highlight>Label:</Highlight> {questions[index - 1].label}
               </Content>
-            </div>
+            </ContentCard>
           )}
-          <Divider />
           {responses.length > 0 && (
             <SurveyForm
               responses={responses}
@@ -193,6 +194,7 @@ const NliSurvey = () => {
               handleSubmit={handleSubmit}
               argumentIndex={argumentIndex}
               setArgumentIndex={updateArgumentIndex}
+              updateIndex={updateIndex}
               questions={questions}
             />
           )}

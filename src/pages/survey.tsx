@@ -4,7 +4,7 @@ import {
   Arrows,
   SelectionRow,
   Feedback,
-  Divider,
+  ContentCard,
 } from "@app/pages/surveyStyles";
 import { BsFillCaretLeftFill, BsFillCaretRightFill } from "react-icons/bs";
 import { Slider } from "@app/shared/components/slider";
@@ -55,6 +55,7 @@ interface SurveyProps {
   handleSubmit: () => void;
   argumentIndex: number;
   setArgumentIndex: (adder: number) => void;
+  updateIndex: (adder: number) => void;
   questions: NliQuestion[];
 }
 export const SurveyForm = ({
@@ -68,6 +69,7 @@ export const SurveyForm = ({
   handleSubmit,
   argumentIndex,
   setArgumentIndex,
+  updateIndex,
   questions,
 }: SurveyProps) => {
   const updateData = (value: number | readonly number[], type: string) => {
@@ -84,47 +86,49 @@ export const SurveyForm = ({
   const Response = (useNew: boolean) => {
     return (
       <div>
-        <h3>
-          Based on your reasoning, please classify the data point into one of
-          the following categories.
-        </h3>
-        <div style={{ fontSize: "1em", margin: "1em 0 1em 0" }}>
-          {CATEGORIES.map((e, i) => {
-            return (
-              <SelectionRow key={i}>
-                <input
-                  checked={
-                    useNew
-                      ? responses[index - 1]["postClassification"] ==
-                        CATEGORIES[i]
-                      : responses[index - 1]["classification"] == CATEGORIES[i]
-                  }
-                  onChange={(_) => {
-                    let copy = [...responses];
-                    copy[index - 1]["postClassification"] = CATEGORIES[i];
-                    if (!useNew) {
-                      copy[index - 1]["classification"] = CATEGORIES[i];
+        <ContentCard>
+          <h3>
+            Based on your reasoning, please classify the data point into one of
+            the following categories.
+          </h3>
+          <div style={{ fontSize: "1em", margin: "1em 0 1em 0" }}>
+            {CATEGORIES.map((e, i) => {
+              return (
+                <SelectionRow key={i}>
+                  <input
+                    checked={
+                      useNew
+                        ? responses[index - 1]["postClassification"] ==
+                          CATEGORIES[i]
+                        : responses[index - 1]["classification"] ==
+                          CATEGORIES[i]
                     }
-                    if (i !== 0) {
-                      copy[index - 1]["postNovelty"] = 1;
+                    onChange={(_) => {
+                      let copy = [...responses];
+                      copy[index - 1]["postClassification"] = CATEGORIES[i];
                       if (!useNew) {
-                        copy[index - 1]["novelty"] = 1;
+                        copy[index - 1]["classification"] = CATEGORIES[i];
                       }
-                    }
+                      if (i !== 0) {
+                        copy[index - 1]["postNovelty"] = 1;
+                        if (!useNew) {
+                          copy[index - 1]["novelty"] = 1;
+                        }
+                      }
 
-                    setResponses(copy);
-                  }}
-                  name={"categories" + i}
-                  style={{ marginRight: "1em" }}
-                  type="radio"
-                  value={e}
-                />
-                <label htmlFor={e}>{e}</label>
-              </SelectionRow>
-            );
-          })}
-        </div>
-        <Divider />
+                      setResponses(copy);
+                    }}
+                    name={"categories" + i}
+                    style={{ marginRight: "1em" }}
+                    type="radio"
+                    value={e}
+                  />
+                  <label htmlFor={e}>{e}</label>
+                </SelectionRow>
+              );
+            })}
+          </div>
+        </ContentCard>
         {(useNew
           ? responses[index - 1]["postClassification"] === CATEGORIES[0]
           : responses[index - 1]["classification"] === CATEGORIES[0]) && (
@@ -162,7 +166,7 @@ export const SurveyForm = ({
             ]}
           />
         )}
-        <div>
+        <ContentCard>
           <h3>
             Enter in your explanation. If you have chosen A, please write your
             counterargument.
@@ -181,14 +185,28 @@ export const SurveyForm = ({
               setResponses(copy);
             }}
           />
+        </ContentCard>
+      </div>
+    );
+  };
+
+  const showNew = () => {
+    return (
+      <div>
+        <div>
+          <h3>
+            Based off of the generated counter-arguments, please reevaluate your
+            responses if you have changed your opinion.
+          </h3>
         </div>
+        {Response(true)}
       </div>
     );
   };
 
   return (
     <div>
-      <div>
+      <div style={{ marginBottom: "1em" }}>
         {!responses[index - 1]["showGenerated"] && Response(false)}
         {responses[index - 1]["explanation"] !== "" &&
           responses[index - 1]["classification"] !== "" && (
@@ -210,7 +228,7 @@ export const SurveyForm = ({
             </Button>
           )}
         {responses[index - 1]["showGenerated"] && (
-          <div>
+          <ContentCard>
             <ArrowContainer
               header={"Counterargument"}
               index={argumentIndex}
@@ -229,16 +247,25 @@ export const SurveyForm = ({
                 responses[index - 1]["evaluation"][argumentIndex - 1]
               }
             />
-          </div>
+          </ContentCard>
         )}
-        {responses[index - 1]["argumentFinished"] && (
-          <h3>
-            Based off of the generated counter-arguments, please reevaluate your
-            responses if you have changed your opinion.
-          </h3>
-        )}
-        {responses[index - 1]["argumentFinished"] && Response(true)}
       </div>
+      {responses[index - 1]["argumentFinished"] && showNew()}
+      <ArrowContainer
+        header={"Question"}
+        index={index}
+        updateIndex={updateIndex}
+        length={questions.length}
+        disableForward={() => {
+          let response = responses[index - 1];
+          return (
+            (response.classification != "" &&
+              response.explanation != "" &&
+              response.argumentFinished) ||
+            response.classification === CATEGORIES[3]
+          );
+        }}
+      />
       {finished && (
         <>
           <p>
@@ -252,8 +279,6 @@ export const SurveyForm = ({
             onChange={(e) => setEmail(e.target.value)}
           />
           <Button
-            // !finished
-            // !(finished && validHit)
             disabled={submitted || !finished}
             onClick={() => handleSubmit()}
             padding="10px 20px"

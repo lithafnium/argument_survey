@@ -180,6 +180,7 @@ const RedditSurvey = () => {
               argumentIndex={argumentIndex}
               setArgumentIndex={updateArgumentIndex}
               questions={[]}
+              updateIndex={updateIndex}
             />
           )}
         </ContainerInner>

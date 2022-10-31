@@ -9,6 +9,17 @@ export const RowContainer = styled.div`
   margin-top: 1em;
 `;
 
+export const ContentCard = styled.div`
+  width: 100%;
+  padding: 1em;
+  border: 1.5px solid ${colors.PRIMARY};
+  box-sizing: border-box;
+  border-radius: 5px;
+  // box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16), 0 3px 6px rgba(0, 0, 0, 0.23);
+  margin-bottom: 1em;
+  margin-top: 1em;
+`;
+
 export const Container = styled.div`
   width: 100%;
   display: flex;
